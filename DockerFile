@@ -1,0 +1,85 @@
+# License: GPL-3.0
+# ZeroSub
+FROM ubuntu AS caldera_setup_stage1
+LABEL maintainer="jj@cybercoachservices.org"
+
+# Arguments that can be passed at build time
+ARG userName="caldera"
+ARG userHomeDir="/home/caldera"
+ARG sshkeyDir="/home/caldera/.ssh"
+ARG persistentVolume="/opt/caldera/caldera-persistent-volume"
+ARG contextDirectory="/opt/caldera/ansible-dockerfile-caldera"
+ARG src_SSH_PUBLIC_KEY='/opt/caldera/ssh/caldera-key'
+ARG dst_SSH_public_KEY='/home/caldera/.ssh/caldera-key.pub'
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV UserN=${userName}
+ENV userHDir=${userHomeDir}
+ENV sshkeyDir=${sshkeyDir}
+ENV persistentVol=${persistentVolume}
+ENV contextDir=${contextDirectory}
+ENV srcKeyLocation=${src_SSH_PUBLIC_KEY}
+ENV dstKeyLocation=${dst_SSH_public_KEY}
+
+WORKDIR /
+USER root
+RUN ln -sf /bin/bash /bin/sh
+
+# Update system and install dependencies (gets executing during the building of the image)
+RUN apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    curl \
+    gawk \
+    gcc \
+    git \
+    make \
+    openssh-client \
+    openssh-server \
+    openssl \
+    rsync \
+    sshpass \
+    sudo \
+    wget \
+    sudo \
+    nano \
+    git \
+    python3-pip \
+    python3-setuptools \
+    && \
+    apt-get clean
+
+# Install Upgrades
+RUN apt-get -y upgrade && \
+  pip3 install pip --upgrade
+RUN pip3 install --upgrade pycrypto cryptography
+
+# Create New User
+RUN useradd -rm -d ${userHDir} -s /bin/bash -g root -G sudo -u 1000 ${UserN}
+
+VOLUME ${persistentVol}
+
+RUN chown -R {UserN} /opt
+
+USER ${UserN}
+
+RUN mkdir ${sshkeyDir}
+
+# ADD SSH Public key  to the container user for ansible to use
+COPY ${srcKeyLocation} ${dstKeyLocation}
+RUN chown -R UserN:userName ${dstKeyLocation}
+
+#ADD --chown=55:mygroup  ${sshkeyDir}
+
+RUN git clone --recursive https://github.com/mitre/caldera.git $UserN \
+  && cd ${User}/caldera \
+  && pip3 install wheel \
+  && pip3 install -r requirements.txt
+
+# Expose Ports to host system
+EXPOSE 443/tcp
+EXPOSE 80/tcp
+EXPOSE 8888/tcp
+EXPOSE 22/tcp
+
+
+# port forward ssh
