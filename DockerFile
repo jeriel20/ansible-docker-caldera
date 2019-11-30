@@ -1,25 +1,17 @@
 # License: GPL-3.0
 # ZeroSub
-FROM ubuntu AS caldera_setup_stage1
+FROM ubuntu AS stage1
 LABEL maintainer="jj@cybercoachservices.org"
 
-# Arguments that can be passed at build time
-ARG userName="caldera"
-ARG userHomeDir="/home/caldera"
-ARG sshkeyDir="/home/caldera/.ssh"
-ARG persistentVolume="/opt/caldera/caldera-persistent-volume"
-ARG contextDirectory="/opt/caldera/ansible-dockerfile-caldera"
-ARG src_SSH_PUBLIC_KEY='/opt/caldera/ssh/caldera-key'
-ARG dst_SSH_public_KEY='/home/caldera/.ssh/caldera-key.pub'
+# Environment Variables for the dockerfile [passed at build time]
+ENV userName="caldera"
+ENV userHomeDir="/home/caldera"
+ENV sshKeyDir="/home/caldera/.ssh"
+ENV persistentVolume="/opt/caldera/caldera-persistent-volume"
+ENV contextDirectory="/opt/caldera/ansible-dockerfile-caldera"
+ENV src_SSH_PUBLIC_KEY='/opt/caldera/ssh/caldera-key'
+ENV dst_SSH_public_KEY='/home/caldera/.ssh/caldera-key.pub'
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV UserN=${userName}
-ENV userHDir=${userHomeDir}
-ENV sshkeyDir=${sshkeyDir}
-ENV persistentVol=${persistentVolume}
-ENV contextDir=${contextDirectory}
-ENV srcKeyLocation=${src_SSH_PUBLIC_KEY}
-ENV dstKeyLocation=${dst_SSH_public_KEY}
 
 WORKDIR /
 USER root
@@ -54,26 +46,32 @@ RUN apt-get -y upgrade && \
 RUN pip3 install --upgrade pycrypto cryptography
 
 # Create New User
-RUN useradd -rm -d ${userHDir} -s /bin/bash -g root -G sudo -u 1000 ${UserN}
+RUN useradd -rm -d ${userHomeDir} -s /bin/bash -g root -G sudo -u 1000 ${userName}
 
-VOLUME ${persistentVol}
+VOLUME ${persistentVolume}
 
-RUN chown -R {UserN} /opt
+RUN mkdir -p /opt /tmp && \
+  chown -R ${userName}:${userName} /opt /tmp
 
-USER ${UserN}
+USER ${userName}
 
-RUN mkdir ${sshkeyDir}
+RUN mkdir -p ${sshKeyDir}
 
-# ADD SSH Public key  to the container user for ansible to use
-COPY ${srcKeyLocation} ${dstKeyLocation}
-RUN chown -R UserN:userName ${dstKeyLocation}
+USER root
 
-#ADD --chown=55:mygroup  ${sshkeyDir}
+# ADD SSH Public key  to the container user for Ansible to use
+COPY ${src_SSH_PUBLIC_KEY} ${dst_SSH_public_KEY}
 
-RUN git clone --recursive https://github.com/mitre/caldera.git $UserN \
-  && cd ${User}/caldera \
-  && pip3 install wheel \
-  && pip3 install -r requirements.txt
+RUN chmod 755 ${sshKeyDir} && \
+  chmod 644 ${dst_SSH_public_KEY} && \
+  chown -R ${userName}:${userName} ${sshKeyDir}
+
+WORKDIR ${contextDirectory}
+
+RUN git clone --branch 2.3.2 https://github.com/mitre/caldera.git --recursive && \
+  cd caldera && \
+  pip3 install wheel && \
+  pip3 install -r requirements.txt
 
 # Expose Ports to host system
 EXPOSE 443/tcp
@@ -81,5 +79,8 @@ EXPOSE 80/tcp
 EXPOSE 8888/tcp
 EXPOSE 22/tcp
 
-
 # port forward ssh
+
+WORKDIR ${contextDirectory}/caldera
+
+CMD ["python3", "server.py"]

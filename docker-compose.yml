@@ -1,0 +1,31 @@
+version: "3.7"
+services:
+  ansible-docker-caldera:
+    build:
+      context: .
+    image: jeriel20/ansible-docker-caldera:1.0
+    container_name: caldera
+    restart: always
+    ports:
+      - target: 8888
+        published: 8888
+        protocol: tcp
+        mode: host
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+      - target: 22
+        published: 49822
+        protocol: tcp
+        mode: host
+    networks:
+      caldera:
+
+networks:
+  caldera:
+    driver: bridge
