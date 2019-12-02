@@ -79,8 +79,6 @@ EXPOSE 80/tcp
 EXPOSE 8888/tcp
 EXPOSE 22/tcp
 
-# port forward ssh
-
 WORKDIR ${contextDirectory}/caldera
 
 CMD ["python3", "server.py"]

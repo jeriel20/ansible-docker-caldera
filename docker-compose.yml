@@ -1,31 +1,16 @@
 version: "3.7"
 services:
-  ansible-docker-caldera:
+  caldera:
     build:
       context: .
-    image: jeriel20/ansible-docker-caldera:1.0
-    container_name: caldera
-    restart: always
+      dockerfile: dockerfile
+    image: ubuntu
+    container_name: caldera1
     ports:
-      - target: 8888
-        published: 8888
-        protocol: tcp
-        mode: host
-      - target: 80
-        published: 80
-        protocol: tcp
-        mode: host
-      - target: 443
-        published: 443
-        protocol: tcp
-        mode: host
-      - target: 22
-        published: 49822
-        protocol: tcp
-        mode: host
-    networks:
-      caldera:
-
-networks:
-  caldera:
-    driver: bridge
+       - "8888:8888"
+       - "80:80"
+       - "49222:22"
+       - "443:443"
+    restart: always
+    volumes:
+        - "/opt/caldera/caldera-persistent-volum:/opt/caldera/caldera-persistent-volume"
