@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: dockerfile
     image: ubuntu
-    container_name: caldera1
+    container_name: caldera2
     ports:
        - "8888:8888"
        - "80:80"

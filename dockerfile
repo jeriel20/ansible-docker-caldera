@@ -20,6 +20,7 @@ RUN ln -sf /bin/bash /bin/sh
 # Update system and install dependencies (gets executing during the building of the image)
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    apt-utils \
     curl \
     gawk \
     gcc \
@@ -42,8 +43,7 @@ RUN apt-get update -y && \
 
 # Install Upgrades
 RUN apt-get -y upgrade && \
-  pip3 install pip --upgrade
-RUN pip3 install --upgrade pycrypto cryptography
+  pip install pip --upgrade
 
 # Create New User
 RUN useradd -rm -d ${userHomeDir} -s /bin/bash -g root -G sudo -u 1000 ${userName}
@@ -70,15 +70,13 @@ WORKDIR ${contextDirectory}
 
 RUN git clone --branch 2.3.2 https://github.com/mitre/caldera.git --recursive && \
   cd caldera && \
-  pip3 install wheel && \
-  pip3 install -r requirements.txt
+  pip install wheel && \
+  pip install -r requirements.txt
 
 # Expose Ports to host system
 EXPOSE 443/tcp
 EXPOSE 80/tcp
 EXPOSE 8888/tcp
 EXPOSE 22/tcp
-
-WORKDIR ${contextDirectory}/caldera
 
 CMD ["python3", "server.py"]
