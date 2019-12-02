@@ -3,12 +3,13 @@
 # RUN AS ROOT or with SUDO priviledges
 
 # Variables for the this script
+USER=$(echo $USER)
 CALDERA_BUILD_DIR='/opt/caldera'
 CALDERA_VOLUME='/opt/caldera/caldera-persistent-volume'
 CALDERA_SSH='/opt/caldera/ssh'
 
 # Install Ansible
-apt update -qq && apt upgrade -qq
+apt update -y && apt upgrade -y
 apt install -y software-properties-common
 apt-add-repository --yes --update ppa:ansible/ansible
 apt install -y ansible
@@ -32,9 +33,9 @@ mkdir -p $CALDERA_VOLUME
 
 # Create a folder; generate ssh key pair to add to caldera container to
 # manage using ansible and other ssh avenues
-mkdir -p $CONTEXT_SSH
+mkdir -p $CALDERA_SSH
 ssh-keygen -q -t rsa -N '' -f $CALDERA_SSH/caldera-key
-chown -R $USER:$USER $CALDERA_BUILD_DIR
+chown -R $USER:docker $CALDERA_BUILD_DIR
 
 # Download github repository in order to build the caldera container
 cd $CALDERA_BUILD_DIR
